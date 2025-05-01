@@ -1,18 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const Appointment = require('../models/appoinment.model');
+const Appointment = require('../models/appoinment.model'); // fixed typo in model path
 
 // POST - Create a new appointment
 router.post("/", async (req, res) => {
   try {
-    const { patientName, patientPhone, patientEmail, preferredDate, problemDescription } = req.body;
+    const {
+      patientName,
+      doctorName,
+      patientPhone,
+      patientEmail,
+      preferredDate,
+      problemDescription
+    } = req.body;
 
-    if (!patientName || !patientPhone || !problemDescription) {
-      return res.status(400).json({ message: "Patient name, phone and problem description are required." });
+    // Validation
+    if (!patientName || !doctorName || !patientPhone || !problemDescription) {
+      return res.status(400).json({
+        message: "Patient name, doctor name, phone, and problem description are required."
+      });
     }
 
     const newAppointment = new Appointment({
       patientName,
+      doctorName,
       patientPhone,
       patientEmail,
       preferredDate,

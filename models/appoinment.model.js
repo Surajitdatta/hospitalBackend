@@ -7,6 +7,12 @@ const appointmentSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  doctorName: {
+    type: String,
+    required: true,
+    trim: true
+
+  },
   patientPhone: {
     type: String,
     required: true,
