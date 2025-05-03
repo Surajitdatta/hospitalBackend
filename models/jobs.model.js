@@ -1,15 +1,47 @@
-// id , title, description, department, posted on , last date
 const mongoose = require("mongoose");
 
 const jobSchema = mongoose.Schema(
   {
-    title: {
+    postName: {
       type: String,
-      required: [true, "Job title is required!"],
+      required: [true, "Post name is required!"],
     },
-    description: {
+    experience: {
       type: String,
-      required: [true, "Job description is required!"],
+      required: [true, "Experience is required!"],
+    },
+    location: {
+      type: String,
+      required: [true, "Location is required!"],
+    },
+    qualification: {
+      type: String,
+      required: [true, "Qualification is required!"],
+    },
+    // date: {
+    //   type: Date,
+    //   required: [true, "Date is required!"],
+    // },
+    companyOverview: {
+      type: String,
+      required: [true, "Company overview is required!"],
+    },
+    positionSummary: {
+      type: String,
+      required: [true, "Position summary is required!"],
+    },
+    keyResponsibilities: {
+      type: String,
+      required: [true, "Key responsibilities are required!"],
+    },
+    phoneNumber: {
+      type: String,
+      required: [true, "Phone number is required!"],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required!"],
+      match: [/.+\@.+\..+/, "Please enter a valid email address"],
     },
     department: {
       type: String,
@@ -17,7 +49,7 @@ const jobSchema = mongoose.Schema(
     },
     postedOn: {
       type: Date,
-      default: Date.now, // auto-set to now when created
+      default: Date.now,
     },
     lastDate: {
       type: Date,

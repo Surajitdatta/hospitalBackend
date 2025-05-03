@@ -31,7 +31,7 @@ const healthPackage = require("./routes/HealthPackage.route")
 const insuranceRoutes = require("./routes/Insurance.route");
 const ambulance = require("./routes/Ambulance.route")
 const review = require("./routes/Review.route")
-
+// const jobsAppied = require("./routes/AppliedJobs.route")
 
 
 
@@ -52,6 +52,7 @@ app.use("/api/healthpackage", healthPackage )
 app.use("/api/insurance", insuranceRoutes);
 app.use("/api/ambulance", ambulance)
 app.use("/api/review", review)
+// app.use("/api/appliedjobs", jobsAppied)
 
 
 

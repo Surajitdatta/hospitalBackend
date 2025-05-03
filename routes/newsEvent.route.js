@@ -5,44 +5,40 @@ const upload = require("../middlewares/multer");
 const uploadCloudinary = require("../utils/cloudinary");
 const cloudinary = require("cloudinary").v2;
 
-// 📌 Create a news/event post with image
+// 📌 Create news/event
 router.post("/", upload.single("img"), async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-
     const { title, description, date, type } = req.body;
 
     if (!title || !description || !date || !type) {
       return res.status(400).json({ message: "All fields are required!" });
     }
 
-    let imgUrl = "";
-    if (req.file?.buffer) {
-      const uploadResult = await uploadCloudinary(req.file.buffer);
-      imgUrl = uploadResult.secure_url;
-    } else {
+    if (!req.file?.buffer) {
       return res.status(400).json({ message: "Image is required!" });
     }
 
-    console.log("Image URL:", imgUrl);
+    const uploadResult = await uploadCloudinary(req.file.buffer);
+    const imgUrl = uploadResult.secure_url;
+    const public_id = uploadResult.public_id;
 
     const post = await NewsEvent.create({
       title,
       description,
       img: imgUrl,
+      public_id,
       date,
       type,
     });
 
-    res.status(201).json({ message: "News/Event created successfully!", post });
+    res.status(201).json({ message: "News/Event created!", post });
   } catch (error) {
-    console.error("Error during POST /:", error);
+    console.error("Create error:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-// 📌 Get all news/events
+// 📌 Get all
 router.get("/", async (req, res) => {
   try {
     const posts = await NewsEvent.find().sort({ createdAt: -1 });
@@ -52,7 +48,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 📌 Get single post by ID
+// 📌 Get one
 router.get("/:id", async (req, res) => {
   try {
     const post = await NewsEvent.findById(req.params.id);
@@ -63,48 +59,66 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// 📌 Update a post (with optional image change)
+// 📌 Update
 router.put("/:id", upload.single("img"), async (req, res) => {
   try {
     const { title, description, date, type } = req.body;
 
-    let imgUrl = req.body.img; // default old image URL
+    const post = await NewsEvent.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Not found" });
 
+    let imgUrl = post.img;
+    let public_id = post.public_id;
+
+    // If new image provided, delete old image and upload new
     if (req.file?.buffer) {
+      if (public_id) {
+        await cloudinary.uploader.destroy(public_id);
+      }
       const uploadResult = await uploadCloudinary(req.file.buffer);
       imgUrl = uploadResult.secure_url;
+      public_id = uploadResult.public_id;
     }
 
-    const post = await NewsEvent.findByIdAndUpdate(
-      req.params.id,
-      { title, description, img: imgUrl, date, type },
-      { new: true }
-    );
+    post.title = title;
+    post.description = description;
+    post.date = date;
+    post.type = type;
+    post.img = imgUrl;
+    post.public_id = public_id;
 
-    if (!post) return res.status(404).json({ message: "Not found" });
+    await post.save();
 
-    res.status(200).json({ message: "News/Event updated successfully!", post });
+    res.status(200).json({ message: "Updated successfully!", post });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// 📌 Delete a post and image from Cloudinary
+// 📌 Delete
+// 📌 Delete
 router.delete("/:id", async (req, res) => {
   try {
-    const post = await NewsEvent.findByIdAndDelete(req.params.id);
-    if (!post) return res.status(404).json({ message: "Not found" });
+    const post = await NewsEvent.findById(req.params.id);
 
-    // Delete image from Cloudinary
-    if (post.img) {
-      const publicId = post.img.split("/").slice(-1)[0].split(".")[0];
-      await cloudinary.uploader.destroy(publicId);
+    if (!post) {
+      return res.status(404).json({ message: "Department not found" });
     }
 
-    res.status(200).json({ message: "News/Event deleted successfully!" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Check and destroy image from Cloudinary if it exists
+    if (post.public_id) {
+      console.log("Deleting from Cloudinary:", post.public_id);
+      const result = await cloudinary.uploader.destroy(post.public_id);
+      console.log("Cloudinary delete result:", result);
+    }
+
+    await NewsEvent.findByIdAndDelete(req.params.id);
+    res.status(200).json("Post has been deleted");
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json(err);
   }
 });
+
 
 module.exports = router;
